@@ -1,0 +1,92 @@
+---
+title: "Exam 2 Programming Assignment"
+output:
+  html_document:
+    df_print: paged
+---
+
+R Notebook Prepared by Ahmed Muhammad
+
+The question asks for one plot that shows the top ten appropriations with the highest dollar increase in current-year budget between budget years 2019 and 2020, and the second plot is the same except it shows the top ten appropriations with the highest percentage year over year increase.
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE}
+
+library(dplyr)
+library(knitr)
+library(tidyverse)
+library(stopwords)
+library(tidytext)
+library(kableExtra)
+library(scales)
+
+```
+
+```{r code, message=FALSE, warning=FALSE, include=FALSE}
+
+data <- read_csv("Operating_Budget.csv")
+
+sumPerYear <- data %>%
+  group_by(APPROPRIATION, BFY) %>% 
+  summarise(sum = sum(BUDCURR))
+
+# code for plot 1 data below 
+
+plot1data <- spread(sumPerYear, value = sum, key = BFY)
+
+d1 <- mutate(plot1data, difference = `2020` - `2019`)
+
+d1 <- na.omit(d1) %>%
+arrange(desc(difference))
+
+d1 <- d1[-1,]
+
+d1plot <- d1[1:10, ]
+
+### code for plot 2 data below
+
+d2 <- mutate(plot1data, percentChange = ((`2020` - `2019`)/(`2019`)))
+d2 <- na.omit(d2) %>%
+arrange(desc(percentChange))
+
+d2 <- d2[-1,]
+
+d2plot <- d2[1:10, ]
+
+```
+
+To make these plots, I used group_by to separate my data first into APPROPRIATION and then by BFY. Then, I used summarize to find the sum of each group. Then, I used spread to get my data in a position where I can use mutate to find the dollar amount change for plot 1, and the percent change for plot 2. Next, I removed Appropriations that had a non-zero value in one of the years, and a zero value in the other. This would greatly skew both are plots because any appropriation that goes from 0 to a dollar figure will be augmented in its increased value. Then, I stored the top 10 values into a data frame that is ready for plotting without any changes. I chose to hide all the code except for the plot commands as to give an organized look.
+
+
+### Question 1
+
+```{r plot1}
+
+
+p1 <- ggplot(data = d1plot) + 
+  geom_bar(aes(x = reorder(APPROPRIATION, difference), y = difference), stat = "identity")+
+  coord_flip() + 
+  ggtitle("Top 10 Appropriations with Highest Dollar Change Increase") + 
+  labs(y= "Dollar Amount Difference", x = "Appropriation") + 
+  scale_y_continuous(labels = dollar)
+
+p1
+```
+
+This first plot shows the top 10 highest dollar amount increases in Appropriations. I flipped the coordinates and used the scale() library to but my y axis in dollar figures.
+
+### Question 2
+
+```{r plot2}
+p2 <- ggplot(data = d2plot) + 
+  geom_bar(aes(x = reorder(APPROPRIATION, percentChange), y = percentChange), stat = "identity")+
+  coord_flip() + 
+  ggtitle("Top 10 Appropriations with Highest Percentage Increase") + 
+  labs(y= "Percent Change", x = "Appropriation") + 
+  scale_y_continuous(labels = percent)
+
+p2
+
+
+```
+
+This second plot shows the top 10 highest percent change increases in Appropriations.I flipped the coordinates and used the scale() library to but my y axis in percent figures.
